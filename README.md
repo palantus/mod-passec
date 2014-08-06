@@ -1,7 +1,7 @@
 Passec
 ==========
 
-Secure Password keeper for ServerPlatform.
+Secure Password keeper for [ServerPlatform](https://github.com/palantus/serverplatform).
 
 Try it [here](https://ahkpro.dk/passec/).
 
