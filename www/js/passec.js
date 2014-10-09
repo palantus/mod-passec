@@ -37,10 +37,10 @@ function init(){
 		$("#bucketpasswordshowhidechars").click(function(){
 			if($("#bucketpassword").attr("type") == "password"){
 				$("#bucketpassword").attr("type", "text");
-				$("#bucketpasswordshowhidechars").html("Show what you type");
+				$("#bucketpasswordshowhidechars").html("Hide what you type");
 			} else {
 				$("#bucketpassword").attr("type", "password");
-				$("#bucketpasswordshowhidechars").html("Hide what you type");
+				$("#bucketpasswordshowhidechars").html("Show what you type");
 			}
 		});
 	} else {
