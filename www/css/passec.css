@@ -108,6 +108,11 @@ td.completedcheckbox{width: 20px;}
 	height: 40px;
 }
 
+#bucketpasswordshowhidechars{
+	width: 180px;
+	height: 40px;
+}
+
 input[type=text]{
 	height: 30px;
 }

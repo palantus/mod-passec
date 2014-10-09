@@ -33,6 +33,16 @@ function init(){
 				alert("Please enter a password");
 			}
 		});
+
+		$("#bucketpasswordshowhidechars").click(function(){
+			if($("#bucketpassword").attr("type") == "password"){
+				$("#bucketpassword").attr("type", "text");
+				$("#bucketpasswordshowhidechars").html("Show what you type");
+			} else {
+				$("#bucketpassword").attr("type", "password");
+				$("#bucketpasswordshowhidechars").html("Hide what you type");
+			}
+		});
 	} else {
 		$("#bucketpasswordcontainer").hide();
 		$("#helptext").fadeIn("fast");
