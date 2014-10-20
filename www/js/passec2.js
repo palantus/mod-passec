@@ -493,8 +493,12 @@ function refreshPasswords(){
 	}
 
 	$("#customtags").empty();
+	var tags = [];
 	for(var t in uniqueTags)
-		$("#customtags").append($("<div/>", {class: "tag", html: t}));
+		tags[tags.length] = t;
+	tags = tags.sort(function(a, b){return a > b ? 1 : -1;});
+	for(var t in tags)
+		$("#customtags").append($("<div/>", {class: "tag", html: tags[t]}));
 
 	$("#customtags .tag").click(function(){
 		var t = $(this);
