@@ -91,7 +91,7 @@ button:hover{background-color:#f5f5f5; cursor: pointer;}
     padding-right: 20px;
 }
 
-#passwordlist tbody td{padding: 5px; border-top: 1px solid gray;}
+#passwordlist tbody td{padding: 5px 5px 5px 5px; border-top: 1px solid gray;}
 #passwordlist tbody tr:hover{cursor: pointer; background-color: #ddd;}
 
 
@@ -175,9 +175,14 @@ div.popup div.content input{margin-top: 10px; margin-bottom: 10px; width: 300px;
 	}
 	#passwordlist{margin-top: 120px;}
 	hr{display: none;}
+
+	#passwordlist tbody td{
+		padding: 2px 5px 2px 5px;
+	}
 }
 
 
-@media only screen and (min-width: 780px) and (min-device-width: 780px) {
+@media only screen and (min-width: 850px) and (min-device-width: 850px) {
 	#passwordlist thead td{min-width: 150px;}
+	#passwordlist thead td:first-child{	min-width: 250px;}
 }
