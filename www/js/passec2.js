@@ -278,7 +278,7 @@ function initFunctionality(){
 			filterType = "query"
 			filterQuery = $("#searchbox").val();
 			refreshPasswords();
-		}, 200);
+		}, isMobileOrNarrow() ? 200 : 0);
 	};
 
 	$("#maintitle").click(function(){
