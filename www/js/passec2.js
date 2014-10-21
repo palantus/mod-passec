@@ -141,64 +141,6 @@ function initFunctionality(){
 		showPass(newId);
 	})
 
-	/*
-	$("#addpass").click(function(){
-		var popupCreator = new PopupCreator();
-		popupCreator.init({
-			title: "Add password",
-			content:   "<table>"
-						+ "<tr><td>Title: </td><td><input type='text' style='width: " + (isMobileOrNarrow() ? "100%" : "400px") + "; display: block;'></input></td></tr>"
-						+ "<tr><td>Username: </td><td><input type='text' style='width: " + (isMobileOrNarrow() ? "100%" : "400px") + "; display: block;'></input></td></tr>"
-						+ "<tr><td>Password: </td><td><input type='text' style='width: " + (isMobileOrNarrow() ? "100%" : "400px") + "; display: block;'></input></td></tr>"
-						+ "<tr><td></td><td><div id='errormessage' style='color:red;display:none;'>Maximum length of an item is 200 characters.</div></td></tr>"
-						+ "<tr><td></td><td><button id='ok' style=''>Add</button></td></tr>"
-						+ "<tr><td></td><td><button id='randomizepass' style=''>Randomize password</button></td></tr>"
-						+ "<tr><td></td><td><button id='cancel'>Cancel</button></td></tr>"
-						+ "</table>",
-			maximize: isMobileOrNarrow(),
-			onShow: function(){
-				var t = this;
-				this.element.find("input:first").focus();
-
-				this.element.find("input").keydown(function(e){
-					if(e.which == 13 && t.element.find("input:eq(0)").val() != ""){
-						t.element.find("#ok").click();
-					}
-				});
-
-				this.element.find("#randomizepass").click(function(){
-					t.element.find("input:eq(2)").val(Math.random().toString(36).slice(-12));
-				});
-
-				this.element.find("#ok").click(function(){
-					var newTitle = t.element.find("input:eq(0)").val();
-					var newUsername = t.element.find("input:eq(1)").val();
-					var newPass = t.element.find("input:eq(2)").val();
-					t.element.find("#errormessage").hide();
-					if(newTitle && newTitle.length > 200){
-						t.element.find("#errormessage").show();
-						t.element.find("input").hide();
-						setTimeout(function(){
-							t.element.find("#errormessage").hide();
-							t.element.find("input").show();
-						}, 2000);
-					}
-					else if(newTitle){
-						t.close();
-						changes.push({id: guid(), type: 1, orderIdx: 1, title: newTitle, username: newUsername, password: newPass});
-						onChange();
-					}
-				});
-				this.element.find("#cancel").click(function(){
-					t.close();
-				});
-			}
-		});
-		popupCreator.show();
-		
-	});
-	*/
-	
 	$("#showtrash").click(function(){
 		$("#trashtable").toggle();
 		$("#showtrash").html($("#trashtable:visible").length > 0 ? "Hide Trash" : "Show Trash");
@@ -212,15 +154,23 @@ function initFunctionality(){
 		closeCurrentPassword();
 	})
 
+	$("#curpassword_random").click(function(){
+		var curPass = $("#curpassword_password").val();
+		if(curPass && !confirm("Are you sure that you want to overwrite the current password with a new random one?"))
+			return;
+
+		$("#curpassword_password").val(generatePassword());
+	})
+
 
 	$("#curpassword_trash").click(function(){
 		var pass = $("#passwordshow").data("pass");
-		if(pass && pass.id){
+		if(pass && pass.id && confirm("Are you sure that you want to trash the current password?")){
 			changes.push({id: pass.id, type: -1, orderIdx: pass.orderIdx + 1});
 			onChange();
+			
+			closeCurrentPassword();
 		}
-
-		closeCurrentPassword();
 	});
 
 	$("#curpassword_save").click(function(){
@@ -230,6 +180,12 @@ function initFunctionality(){
 		var newUsername = $("#curpassword_username").val();
 		var newPassword = $("#curpassword_password").val();
 		var newTags = $("#curpassword_tags").val();
+
+		if(pass.username && pass.username != newUsername && !confirm("Are you sure that you want to change this username?"))
+			return;
+
+		if(pass.password && pass.password != newPassword && !confirm("Are you sure that you want to change this password?"))
+			return;
 
 		if(newTitle != pass.title || newUsername != pass.username || newPassword != pass.password || newTags != pass.tags){
 			pass.title = newTitle;
@@ -640,62 +596,18 @@ function showPass(id, preventFocus){
 
 	$("#curpassword_save").removeAttr("disabled")
 	$("#curpassword_trash").removeAttr("disabled")
-
-	/*
-	var popupCreator = new PopupCreator();
-	popupCreator.init({
-		title: pass.title,
-		content:   "<table>"
-					+ "<tr><td>Title: </td><td><input type='text' style='width: " + (isMobileOrNarrow() ? "100%" : "400px") + "; display: block;'></input></td></tr>"
-					+ "<tr><td>Username: </td><td><input type='text' style='width: " + (isMobileOrNarrow() ? "100%" : "400px") + "; display: block;'></input></td></tr>"
-					+ "<tr><td>Password: </td><td><input type='text' style='width: " + (isMobileOrNarrow() ? "100%" : "400px") + "; display: block;'></input></td></tr>"
-					+ "<tr><td></td><td><button id='save' style=''>Save</button><button id='close' style=''>Close</button><button id='remove' style=''>Remove</button></td></tr>"
-					+ "</table>",
-		maximize: isMobileOrNarrow(),
-		onShow: function(){
-			var t = this;
-			this.element.find("input:eq(0)").val(pass.title);
-			this.element.find("input:eq(1)").val(pass.username);
-			this.element.find("input:eq(2)").val(pass.password);
-			this.element.find("input:first").focus();
-
-			this.element.find("input").keydown(function(e){
-				if(e.which == 13 && t.element.find("input:eq(0)").val() != ""){
-					t.element.find("#save").click();
-				}
-			});
-
-			this.element.find("#save").click(function(){
-
-				var newTitle = t.element.find("input:eq(0)").val();
-				var newUsername = t.element.find("input:eq(1)").val();
-				var newPassword = t.element.find("input:eq(2)").val();
-
-				if(newTitle != pass.title || newUsername != pass.username || newPassword != pass.password){
-					pass.title = newTitle;
-					pass.username = newUsername;
-					pass.password = newPassword;
-
-					changes.push({id: pass.id, type: 0, orderIdx: pass.orderIdx + 1, title: pass.title, username: pass.username, password: pass.password});
-					onChange();
-				}
-
-				t.close();
-			});
-			this.element.find("#close").click(function(){
-				t.close();
-			});
-			this.element.find("#remove").click(function(){
-				t.close();
-				changes.push({id: pass.id, type: -1, orderIdx: pass.orderIdx + 1});
-				onChange();
-			});
-		}
-	});
-	popupCreator.show();
-	*/
 }
 
 function isMobileOrNarrow(){
 	return isMobile() || $(window).innerWidth() < 450;
+}
+
+function generatePassword() {
+    var length = 12,
+        charset = "abcdefghijklnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+        retVal = "";
+    for (var i = 0, n = charset.length; i < length; ++i) {
+        retVal += charset.charAt(Math.floor(Math.random() * n));
+    }
+    return retVal;
 }
