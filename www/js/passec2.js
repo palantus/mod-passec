@@ -34,8 +34,8 @@ function init(){
 				load();
 				sync();
 				refreshPasswords();
-				
-				$("#searchbox").focus();
+				if(!isMobile())
+					$("#searchbox").focus();
 			} else {
 				alert("Please enter a password");
 			}
