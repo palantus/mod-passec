@@ -15,6 +15,10 @@ function init(){
 
 	if(getUrlVar("b") != undefined){
 		curBucket = getUrlVar("b");
+	} else if(localStorage["FFAppBucket"]){
+		curBucket = localStorage["FFAppBucket"];
+	} else {
+		window.location = "/passec/";
 	}
 
 	if(curBucket){
