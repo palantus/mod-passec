@@ -5,6 +5,12 @@ var password = "";
 var curBucket = "";
 var lastLoadedEncryptedPasswords = [];
 
+var filterType = "query"; //tag, query, "", notag, trash
+var filterQuery = ""; //specific tag og query
+
+var uniqueTags = {};
+var delayTimer = null;
+
 function init(){
 
 	if(getUrlVar("b") != undefined){
@@ -12,6 +18,7 @@ function init(){
 	}
 
 	if(curBucket){
+		$("#keyprompt").fadeIn();
 		$("#bucketpassword").focus();
 
 		$("#bucketpassword").keydown(function(e){
@@ -23,12 +30,12 @@ function init(){
 		$("#bucketpasswordok").click(function(){
 			password = $("#bucketpassword").val();
 			if(password){
-				$("#bucketpasswordcontainer").hide();
-				$("#bottombar").show();
-				$("#addpass").show();
+				$("#keyprompt").hide();
 				load();
 				sync();
 				refreshPasswords();
+				if(!isMobile())
+					$("#searchbox").focus();
 			} else {
 				alert("Please enter a password");
 			}
@@ -37,18 +44,34 @@ function init(){
 		$("#bucketpasswordshowhidechars").click(function(){
 			if($("#bucketpassword").attr("type") == "password"){
 				$("#bucketpassword").attr("type", "text");
-				$("#bucketpasswordshowhidechars").html("Hide what you type");
+				$("#bucketpasswordshowhidechars").html("Hide input");
+				$("#bucketpassword").focus();
+				localStorage["showkeyinput"] = "true";
 			} else {
 				$("#bucketpassword").attr("type", "password");
-				$("#bucketpasswordshowhidechars").html("Show what you type");
+				$("#bucketpasswordshowhidechars").html("Show input");
+				$("#bucketpassword").focus();
+				localStorage["showkeyinput"] = "false";
 			}
 		});
+
+		if(window.navigator.mozApps){
+			var request = window.navigator.mozApps.getSelf();
+			request.onsuccess = function () {
+				if(this.result){
+					localStorage["FFAppBucket"] = curBucket;
+				}
+			};
+		}
 	} else {
 		$("#bucketpasswordcontainer").hide();
 		$("#helptext").fadeIn("fast");
-		$("#maintable").hide();
+		$("#passwordlist").hide();
 	}
-	
+
+	if(localStorage["showkeyinput"] === "true")
+		$("#bucketpasswordshowhidechars").click();
+
 	setTimeout(function(){
 		initFunctionality();
 	}, 500);
@@ -90,7 +113,7 @@ function initFunctionality(){
 			case 55 : // 7
 			case 56 : // 8
 			case 57 : // 9
-				$("#maintable tr:nth-child(" + (e.which - 48) + ")").click();
+				$("#passwordlist tr:nth-child(" + (e.which - 48) + ")").click();
 				break;
 			case 97 : // 1
 			case 98 : // 2
@@ -101,7 +124,7 @@ function initFunctionality(){
 			case 103 : // 7
 			case 104 : // 8
 			case 105 : // 9
-				$("#maintable tr:nth-child(" + (e.which - 96) + ")").click();
+				$("#passwordlist tr:nth-child(" + (e.which - 96) + ")").click();
 				break;
 		}
 	});
@@ -122,61 +145,13 @@ function initFunctionality(){
 	});
 
 	$("#addpass").click(function(){
-		var popupCreator = new PopupCreator();
-		popupCreator.init({
-			title: "Add password",
-			content:   "<table>"
-						+ "<tr><td>Title: </td><td><input type='text' style='width: " + (isMobileOrNarrow() ? "100%" : "400px") + "; display: block;'></input></td></tr>"
-						+ "<tr><td>Username: </td><td><input type='text' style='width: " + (isMobileOrNarrow() ? "100%" : "400px") + "; display: block;'></input></td></tr>"
-						+ "<tr><td>Password: </td><td><input type='text' style='width: " + (isMobileOrNarrow() ? "100%" : "400px") + "; display: block;'></input></td></tr>"
-						+ "<tr><td></td><td><div id='errormessage' style='color:red;display:none;'>Maximum length of an item is 200 characters.</div></td></tr>"
-						+ "<tr><td></td><td><button id='ok' style=''>Add</button></td></tr>"
-						+ "<tr><td></td><td><button id='randomizepass' style=''>Randomize password</button></td></tr>"
-						+ "<tr><td></td><td><button id='cancel'>Cancel</button></td></tr>"
-						+ "</table>",
-			maximize: isMobileOrNarrow(),
-			onShow: function(){
-				var t = this;
-				this.element.find("input:first").focus();
+		var newId = guid();
+		changes.push({id: newId, type: 1, orderIdx: 1, title: "New password", username: "", password: "", tags: ""});
+		onChange();
 
-				this.element.find("input").keydown(function(e){
-					if(e.which == 13 && t.element.find("input:eq(0)").val() != ""){
-						t.element.find("#ok").click();
-					}
-				});
+		showPass(newId);
+	})
 
-				this.element.find("#randomizepass").click(function(){
-					t.element.find("input:eq(2)").val(Math.random().toString(36).slice(-12));
-				});
-
-				this.element.find("#ok").click(function(){
-					var newTitle = t.element.find("input:eq(0)").val();
-					var newUsername = t.element.find("input:eq(1)").val();
-					var newPass = t.element.find("input:eq(2)").val();
-					t.element.find("#errormessage").hide();
-					if(newTitle && newTitle.length > 200){
-						t.element.find("#errormessage").show();
-						t.element.find("input").hide();
-						setTimeout(function(){
-							t.element.find("#errormessage").hide();
-							t.element.find("input").show();
-						}, 2000);
-					}
-					else if(newTitle){
-						t.close();
-						changes.push({id: guid(), type: 1, orderIdx: 1, title: newTitle, username: newUsername, password: newPass});
-						onChange();
-					}
-				});
-				this.element.find("#cancel").click(function(){
-					t.close();
-				});
-			}
-		});
-		popupCreator.show();
-		
-	});
-	
 	$("#showtrash").click(function(){
 		$("#trashtable").toggle();
 		$("#showtrash").html($("#trashtable:visible").length > 0 ? "Hide Trash" : "Show Trash");
@@ -185,6 +160,97 @@ function initFunctionality(){
 	$("#dosync").click(function(){
 		sync();
 	});
+
+	$("#curpassword_close").click(function(){
+		closeCurrentPassword();
+	})
+
+	$("#curpassword_random").click(function(){
+		var curPass = $("#curpassword_password").val();
+		if(curPass && !confirm("Are you sure that you want to overwrite the current password with a new random one?"))
+			return;
+
+		$("#curpassword_password").val(generatePassword());
+	})
+
+
+	$("#curpassword_trash").click(function(){
+		var pass = $("#passwordshow").data("pass");
+		if(pass && pass.id && confirm("Are you sure that you want to trash the current password?")){
+			changes.push({id: pass.id, type: -1, orderIdx: pass.orderIdx + 1});
+			onChange();
+			
+			closeCurrentPassword();
+		}
+	});
+
+	$("#curpassword_save").click(function(){
+		var pass = $("#passwordshow").data("pass");
+
+		var newTitle = $("#curpassword_title").val();
+		var newUsername = $("#curpassword_username").val();
+		var newPassword = $("#curpassword_password").val();
+		var newTags = $("#curpassword_tags").val();
+
+		if(pass.username && pass.username != newUsername && !confirm("Are you sure that you want to change this username?"))
+			return;
+
+		if(pass.password && pass.password != newPassword && !confirm("Are you sure that you want to change this password?"))
+			return;
+
+		if(newTitle != pass.title || newUsername != pass.username || newPassword != pass.password || newTags != pass.tags){
+			pass.title = newTitle;
+			pass.username = newUsername;
+			pass.password = newPassword;
+			pass.tags = newTags;
+
+			changes.push({id: pass.id, type: 0, orderIdx: pass.orderIdx + 1, title: pass.title, username: pass.username, password: pass.password, tags: pass.tags});
+			onChange();
+		}
+
+		closeCurrentPassword();
+
+	})
+	
+	$(document).keydown(function(e) {
+		if (e.keyCode == 27) { //ESC
+			$("div.popup").fadeOut("fast");
+		}
+	});
+
+	$("#taglist .tag").click(function(){ // Standard "tags"
+		var t = $(this);
+		$("#searchbox").val("");
+		if(t.data("type") == "all"){
+			filterType = "query";
+			filterQuery = "";
+			$("#titletext").html("All passwords");
+		} else if(t.data("type") == "notag"){
+			filterType = "notag";
+			filterQuery = "";
+			$("#titletext").html("Passwords without a tag");
+		} else if(t.data("type") == "trash"){
+			filterType = "trash";
+			filterQuery = "";
+			$("#titletext").html("Trash");
+		} else {
+			return;
+		}
+		refreshPasswords();
+	})
+
+	$("#searchbox")[0].oninput = function () {
+		clearTimeout(delayTimer);
+		delayTimer = setTimeout(function() {
+			filterType = "query"
+			filterQuery = $("#searchbox").val();
+			refreshPasswords();
+		}, isMobileOrNarrow() ? 200 : 0);
+	};
+
+	$("#maintitle").click(function(){
+		window.location = "/passec";
+	})
 }
 
 function onChange(){
@@ -192,6 +258,11 @@ function onChange(){
 	load();
 	refreshPasswords();
 	sync();
+}
+
+function closeCurrentPassword(){
+	$("#passwordshow").fadeOut("fast");
+	$("#passwordshow").data("pass", "");
 }
 
 function save(){
@@ -275,8 +346,10 @@ function load(){
 				var decrypted = CryptoJS.AES.decrypt(bucketData[i], password);
 				decrypted = decrypted.toString(CryptoJS.enc.Utf8);
 				if(decrypted.substring(0, 1) == "{"){
-					passwords.push(JSON.parse(decrypted));
+					var pass = JSON.parse(decrypted)
+					passwords.push(pass);
 					lastLoadedEncryptedPasswords.push(bucketData[i]);
+
 				}
 			} catch (err){
 
@@ -350,7 +423,6 @@ function refreshPasswords(){
 	if(passwords === undefined)
 		return;
 
-
 	var visiblePasswords = [];
 	var addedPasswordIds = [];
 	var removedPasswordIds = [];
@@ -375,10 +447,40 @@ function refreshPasswords(){
 			addedPasswordIds.push(sortedPasswords[i].id);
 		}
 	}
+
+
+	/* refresh custom tags */
+	uniqueTags = {};
+	for(var i in visiblePasswords){
+		if(typeof(visiblePasswords[i].tags) === "string" && visiblePasswords[i].tags != ""){
+			var tags = visiblePasswords[i].tags.split(",");
+			for(var t in tags)
+				uniqueTags[tags[t]] = true;
+		}
+	}
+
+	$("#customtags").empty();
+	var tags = [];
+	for(var t in uniqueTags)
+		tags[tags.length] = t;
+	tags = tags.sort(function(a, b){return a > b ? 1 : -1;});
+	for(var t in tags)
+		$("#customtags").append($("<div/>", {class: "tag", html: tags[t]}));
+
+	$("#customtags .tag").click(function(){
+		var t = $(this);
+		filterType = "tag";
+		filterQuery = t.html();
+		$("#searchbox").val("");
+		refreshPasswords();
+	})
 	
-	tab = $("#maintable tbody");
+	/* Refresh visible passwords */
+	tab = $("#passwordlist tbody");
 	tab.empty();
-	var visiblePasswords = visiblePasswords.sort(function(a, b){return a.title > b.title ? 1 : -1;});
+
+	var visiblePasswords = filterPasswords(visiblePasswords);
+	visiblePasswords = visiblePasswords.sort(function(a, b){return a.title > b.title ? 1 : -1;});
 	for(i in visiblePasswords){
 		var tr = $("<tr/>");
 		var td = $("<td/>");
@@ -388,10 +490,15 @@ function refreshPasswords(){
 		
 		tr.click(function(){
 			var pass = $(this).data("pass");
-			showPass(pass.id);
+			showPass(pass.id, true);
 		});
 		
 		tr.append(td);
+
+		tr.append($("<td/>", {html: visiblePasswords[i].username}));
+		tr.append($("<td/>", {html: visiblePasswords[i].tags}));
+
+
 		tab.append(tr);
 	}
 	
@@ -415,11 +522,64 @@ function refreshPasswords(){
 		tab.append(tr);
 	}
 
-	if($("#maintable:visible").length < 1)
-		$("#maintable").fadeIn("fast");
+	if($("#passwordlist:visible").length < 1)
+		$("#passwordlist").fadeIn("fast");
 }
 
-function showPass(id){
+function filterPasswords(passwords){
+	var res = [];
+
+	if(filterType == "query" && !filterQuery){
+		$("#titletext").html("All passwords");
+		return passwords;
+	}
+
+	if(filterType == "tag" && filterQuery)
+		$("#titletext").html("Passwords with tag '" + filterQuery + "'");
+
+	if(filterType == "query" && filterQuery)
+		$("#titletext").html("Passwords containing '" + filterQuery + "'");
+
+	for(i in passwords){
+		var add = false;
+		var pass = passwords[i];
+
+		if(filterType == "tag" && pass.tags !== undefined){
+			var tags = pass.tags.split(",");
+			for(var t in tags){
+				if(filterType == "tag" && tags[t] == filterQuery
+					|| filterType == "query" && tags[t].indexOf(filterQuery) >= 0){
+					add = true;
+				}
+
+			}
+		}
+
+		if(filterType == "notag" && !pass.tags)
+			add = true;
+
+		/*
+		if(filterType == "trash" && !pass.tags)
+			add = true;
+		*/
+
+		if(filterType == "query"){
+			if(!add && pass.title && pass.title.toLowerCase().indexOf(filterQuery.toLowerCase()) >= 0)
+				add = true;
+			if(!add && pass.username && pass.username.toLowerCase().indexOf(filterQuery.toLowerCase()) >= 0)
+				add = true;
+			if(!add && pass.tags && pass.tags.toLowerCase().indexOf(filterQuery.toLowerCase()) >= 0)
+				add = true;
+		}
+
+		if(add)
+			res[res.length] = pass;
+	}
+
+	return res;
+}
+
+function showPass(id, preventFocus){
 
 	var pass = null;
 	for(var i = passwords.length - 1; i >= 0; i--){
@@ -434,59 +594,31 @@ function showPass(id){
 	if(!pass)
 		return;
 
-	var popupCreator = new PopupCreator();
-	popupCreator.init({
-		title: pass.title,
-		content:   "<table>"
-					+ "<tr><td>Title: </td><td><input type='text' style='width: " + (isMobileOrNarrow() ? "100%" : "400px") + "; display: block;'></input></td></tr>"
-					+ "<tr><td>Username: </td><td><input type='text' style='width: " + (isMobileOrNarrow() ? "100%" : "400px") + "; display: block;'></input></td></tr>"
-					+ "<tr><td>Password: </td><td><input type='text' style='width: " + (isMobileOrNarrow() ? "100%" : "400px") + "; display: block;'></input></td></tr>"
-					+ "<tr><td></td><td><button id='save' style=''>Save</button><button id='close' style=''>Close</button><button id='remove' style=''>Remove</button></td></tr>"
-					+ "</table>",
-		maximize: isMobileOrNarrow(),
-		onShow: function(){
-			var t = this;
-			this.element.find("input:eq(0)").val(pass.title);
-			this.element.find("input:eq(1)").val(pass.username);
-			this.element.find("input:eq(2)").val(pass.password);
-			this.element.find("input:first").focus();
+	$("#passwordshow").data("pass", pass);
+	$("#passwordshow").fadeIn("fast");
 
-			this.element.find("input").keydown(function(e){
-				if(e.which == 13 && t.element.find("input:eq(0)").val() != ""){
-					t.element.find("#save").click();
-				}
-			});
+	$("#curpassword_title").val(pass.title);
+	$("#curpassword_username").val(pass.username);
+	$("#curpassword_password").val(pass.password);
+	$("#curpassword_tags").val(pass.tags);
 
-			this.element.find("#save").click(function(){
+	if(preventFocus !== true)
+		$("#curpassword_title").focus();
 
-				var newTitle = t.element.find("input:eq(0)").val();
-				var newUsername = t.element.find("input:eq(1)").val();
-				var newPassword = t.element.find("input:eq(2)").val();
-
-				if(newTitle != pass.title || newUsername != pass.username || newPassword != pass.password){
-					pass.title = newTitle;
-					pass.username = newUsername;
-					pass.password = newPassword;
-
-					changes.push({id: pass.id, type: 0, orderIdx: pass.orderIdx + 1, title: pass.title, username: pass.username, password: pass.password});
-					onChange();
-				}
-
-				t.close();
-			});
-			this.element.find("#close").click(function(){
-				t.close();
-			});
-			this.element.find("#remove").click(function(){
-				t.close();
-				changes.push({id: pass.id, type: -1, orderIdx: pass.orderIdx + 1});
-				onChange();
-			});
-		}
-	});
-	popupCreator.show();
+	$("#curpassword_save").removeAttr("disabled")
+	$("#curpassword_trash").removeAttr("disabled")
 }
 
 function isMobileOrNarrow(){
 	return isMobile() || $(window).innerWidth() < 450;
+}
+
+function generatePassword() {
+    var length = 12,
+        charset = "abcdefghijklnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+        retVal = "";
+    for (var i = 0, n = charset.length; i < length; ++i) {
+        retVal += charset.charAt(Math.floor(Math.random() * n));
+    }
+    return retVal;
 }

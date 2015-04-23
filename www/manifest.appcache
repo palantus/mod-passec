@@ -1,8 +1,10 @@
 CACHE MANIFEST
-#VERSION 85
+#VERSION 20
 /passec/index.html
+/passec/show.html
 /passec/css/passec.css
 /passec/js/passec.js
+/passec/manifest.webapp
 /js/jquery.min.js
 /js/jquery.cookie.js
 /js/all.js
@@ -11,3 +13,6 @@ CACHE MANIFEST
 /img/max.png
 /img/windowed.png
 /img/close.png
+/passec/img/lock.png
+/passec/img/lock_196.png
+/passec/img/lock_128.png
