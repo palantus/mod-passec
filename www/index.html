@@ -59,8 +59,9 @@
 					};
 				}
 			});
-
-			//alert(window.navigator.mozApps ? "ja" : "nej")
+			if(window.navigator.mozApps){
+				$("#installapp").show();
+			}
 		});
 	</script>
 </head>
