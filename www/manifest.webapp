@@ -1,7 +1,7 @@
 {
   "name": "Passec",
   "description": "Passec - Secure Password Keeper",
-  "launch_path": "/passec/index.html",
+  "launch_path": "/passec/app_landing.html",
   "icons": {
     "196": "/passec/img/lock_196.png",
     "128": "/passec/img/lock_128.png"
