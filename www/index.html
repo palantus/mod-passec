@@ -45,7 +45,7 @@
 			$("#installapp").click(function(){
 				if(window.navigator.mozApps){
 					console.log("Installing app...")
-					var request = window.navigator.mozApps.install("http://localhost:3000/passec/manifest.webapp");
+					var request = window.navigator.mozApps.install("https://ahkpro.dk/passec/manifest.webapp");
 					request.onsuccess = function () {
 						// Save the App object that is returned
 						var appRecord = this.result;
