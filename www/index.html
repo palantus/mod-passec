@@ -30,6 +30,11 @@
 				}
 			};
 		}
+
+		if(getUrlVar("b") != undefined){
+			window.location = "/passec/show.html?b=" + getUrlVar("b");
+		}
+
 		$(function() {
 			$("#newrandom").click(function(){
 				bid = guid();
