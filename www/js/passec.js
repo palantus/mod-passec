@@ -38,6 +38,7 @@ function init(){
 				load();
 				sync();
 				refreshPasswords();
+				$("#bucketpassword").val("");
 				if(!isMobile())
 					$("#searchbox").focus();
 			} else {
