@@ -484,7 +484,7 @@ function refreshPasswords(){
 	tab.empty();
 
 	var visiblePasswords = filterPasswords(visiblePasswords);
-	visiblePasswords = visiblePasswords.sort(function(a, b){return a.title > b.title ? 1 : -1;});
+	visiblePasswords = visiblePasswords.sort(function(a, b){return (a.title && b.title && a.title.toLowerCase() > b.title.toLowerCase()) ? 1 : -1;});
 	for(i in visiblePasswords){
 		var tr = $("<tr/>");
 		var td = $("<td/>");
